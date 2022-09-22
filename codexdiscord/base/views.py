@@ -1,12 +1,21 @@
 from django.shortcuts import render, redirect
-from .models import Rooms
+from django.db.models import Q
+from .models import Rooms, Topic
 from .forms import RoomForm
 
 
 def home(request):
-    rooms = Rooms.objects.all()
-    #as dictionary we pass variables. key is a name of variable, value is a reference to it
-    context = {'rooms': rooms}
+    q = request.GET.get('q') if request.GET.get('q') != None else ''
+
+    #Q allowes for query using & |
+    rooms = Rooms.objects.filter(
+        Q(topic__name__icontains=q) |
+        Q(name__icontains=q) |
+        Q(description__icontains=q)
+    )
+    topics = Topic.objects.all()
+
+    context = {'rooms': rooms, 'topics': topics}
     return render(request, 'base/home.html', context)
 
 
