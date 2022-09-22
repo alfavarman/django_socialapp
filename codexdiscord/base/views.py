@@ -1,7 +1,44 @@
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.db.models import Q
 from .models import Rooms, Topic
 from .forms import RoomForm
+
+
+def login_page(request):
+
+    # retrieve login credential
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        # check if user exists
+        try:
+            user = User.objects.get(username=username)
+        except:
+            messages.error(request, 'User not exists')
+
+        # make sure credential are correct if not user = None
+        user = authenticate(request, username=username, password=password)
+
+        # login user if successfully authenticated
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        # if not authenticated
+        else:
+            messages.error(request, 'Wrong user or password, please try again')
+
+    context = {}
+    return render(request, 'base/login_register.html', context)
+
+
+def logout_page(request):
+    logout(request)
+    return redirect('home')
 
 
 def home(request):
@@ -25,6 +62,7 @@ def room(request, pk):
     return render(request, 'base/room.html', context)
 
 
+@login_required(login_url='login')
 def create_room(request):
     form = RoomForm
     if request.method == 'POST':
@@ -37,6 +75,7 @@ def create_room(request):
     return render(request, 'base/room_form.html', context)
 
 
+@login_required(login_url='login')
 def update_room(request, pk):
     room = Rooms.objects.get(id=pk)
     form = RoomForm(instance=room)
@@ -51,6 +90,7 @@ def update_room(request, pk):
     return render(request, 'base/room_form.html', context)
 
 
+@login_required(login_url='login')
 def delete_room(request, pk):
     room = Rooms.objects.get(id=pk)
     if request.method == 'POST':
