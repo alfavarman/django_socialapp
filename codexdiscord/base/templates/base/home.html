@@ -48,6 +48,15 @@
 
     <div class="recent_activity_column">
         <h3>Recent Activity</h3>
+        <hr>
+        {% for rm_msg in room_messages %}
+            <div>
+                <small>@{{rm_msg.user}} {{rm_msg.updated|timesince}}</small>
+                <small>replied to "{{rm_msg.room}}"</small>
+                <p>{{rm_msg}}</p>
+                <hr>
+            </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
