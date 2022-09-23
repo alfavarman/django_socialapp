@@ -93,6 +93,10 @@ def update_room(request, pk):
 @login_required(login_url='login')
 def delete_room(request, pk):
     room = Rooms.objects.get(id=pk)
+
+    if request.user != room.host:   #better solution to now show button Edit to Guest(notlogin) and to nonhost
+        return messages.error(request, 'Only host can edit room')
+
     if request.method == 'POST':
         room.delete()
         return redirect('home')
