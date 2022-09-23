@@ -100,6 +100,8 @@ def room(request, pk):
             room=room,
             body=request.POST.get('body'),
         )
+
+        # participiant list should be returned by operson active in room.
         room.participants.add(request.user)
         return redirect('room', pk=room.id)
 
