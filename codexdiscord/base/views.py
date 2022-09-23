@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.db.models import Q
-from .models import Rooms, Topic
+from .models import Rooms, Topic, Messages
 from .forms import RoomForm
 
 
@@ -91,6 +91,15 @@ def room(request, pk):
     room = Rooms.objects.get(id=pk)
     room_messages = room.messages_set.all().order_by('-created')
     context = {'room': room, 'room_messages': room_messages}
+
+    if request.method == 'POST':
+        message = Messages.objects.create(
+            user=request.user,
+            room=room,
+            body=request.POST.get('body'),
+        )
+        return redirect('room', pk=room.id)
+
     return render(request, 'base/room.html', context)
 
 
