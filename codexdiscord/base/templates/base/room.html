@@ -36,7 +36,12 @@
     </div>
 
     <div class="participants-container">
-        <p>Participants</p>
+        <p>Participants: </p>
+        {% for participant in participants %}
+            <div>
+                <p>@{{participant}}</p>
+            </div>
+        {% endfor %}
         <hr>
     </div>
 
