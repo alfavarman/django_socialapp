@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.shortcuts import render, redirect
@@ -9,15 +10,19 @@ from .forms import RoomForm
 
 
 def login_page(request):
+    page = 'login'
+    # if user is login already redirext to home
+    if request.user.is_authenticated:
+        return redirect('home')
 
     # retrieve login credential
     if request.method == 'POST':
-        username = request.POST.get('username')
+        username = request.POST.get('username').lower()
         password = request.POST.get('password')
 
         # check if user exists
         try:
-            user = User.objects.get(username=username)
+            User.objects.get(username=username)
         except:
             messages.error(request, 'User not exists')
 
@@ -32,7 +37,7 @@ def login_page(request):
         else:
             messages.error(request, 'Wrong user or password, please try again')
 
-    context = {}
+    context = {'page': page}
     return render(request, 'base/login_register.html', context)
 
 
@@ -41,10 +46,36 @@ def logout_page(request):
     return redirect('home')
 
 
-def home(request):
-    q = request.GET.get('q') if request.GET.get('q') != None else ''
+def register_page(request):
+    form = UserCreationForm()
+    # when register send POST
+    if request.method == 'POST':
+        # form takes data from post
+        form = UserCreationForm(request.POST)
+        # validation check
+        if form.is_valid():
+            # save without commit to lowercase input
+            user = form.save(commit=False)
+            user.username = user.username.lower()
+            user.save()
+            # login in user
+            login(request, user)
+            # redirect logged user to home
+            return redirect('home')
+        # this section is not required as django handles registration errors!
+        # else:
+        #     # if error:
+        #     messages.error(request, "Try register again")
 
-    #Q allowes for query using & |
+
+
+    return render(request, 'base/login_register.html', {'form': form})
+
+
+def home(request):
+    q = request.GET.get('q') if request.GET.get('q') is not None else ''
+
+    # Q allows for query using & and |
     rooms = Rooms.objects.filter(
         Q(topic__name__icontains=q) |
         Q(name__icontains=q) |
@@ -94,7 +125,7 @@ def update_room(request, pk):
 def delete_room(request, pk):
     room = Rooms.objects.get(id=pk)
 
-    if request.user != room.host:   #better solution to now show button Edit to Guest(notlogin) and to nonhost
+    if request.user != room.host:
         return messages.error(request, 'Only host can edit room')
 
     if request.method == 'POST':

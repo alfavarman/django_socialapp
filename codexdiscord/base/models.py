@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 class Topic(models.Model):
     name = models.CharField(max_length=200)
+    objects = models.Manager()
 
     def __str__(self):
         return self.name
@@ -17,6 +18,7 @@ class Rooms(models.Model):
     #participants =
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+    objects = models.Manager()
 
     class Meta:
         ordering = ['-updated', '-created']
@@ -25,15 +27,13 @@ class Rooms(models.Model):
         return self.name
 
 
-
-
-
 class Messages(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     room = models.ForeignKey(Rooms, on_delete=models.CASCADE)
     body = models.TextField()
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+    objects = models.Manager()
 
     def __str__(self):
         return self.body[0:50]
