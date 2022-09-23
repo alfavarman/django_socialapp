@@ -73,7 +73,7 @@ def register_page(request):
 
 
 def home(request):
-    q = request.GET.get('q') if request.GET.get('q') is not None else ''
+    q = request.GET.get('q') if request.GET.get('q') != None else ''
 
     # Q allows for query using & and |
     rooms = Rooms.objects.filter(
@@ -83,7 +83,7 @@ def home(request):
     )
     topics = Topic.objects.all()
     room_count = rooms.count()
-    room_messages = Messages.objects.all()
+    room_messages = Messages.objects.filter(Q(room__topic__name__icontains=q))
 
     context = {'rooms': rooms, 'room_count': room_count, 'topics': topics, 'room_messages': room_messages}
     return render(request, 'base/home.html', context)
