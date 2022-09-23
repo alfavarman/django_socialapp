@@ -53,9 +53,10 @@
             <div>
                 <small>@{{rm_msg.user}} {{rm_msg.updated|timesince}}</small>
                 <small>replied to "{{rm_msg.room}}"</small>
+
                 <p>{{rm_msg}}</p>
-                {% if request.user == message.user %}
-                    <a href="{% url 'delete-message' message.id %}">Delete</a>
+                {% if request.user == rm_msg.user %}
+                    <a href="{% url 'delete-message' rm_msg.id %}">Delete</a>
                 {% endif %}
                 <hr>
             </div>
