@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.db.models import Q
-from .models import Rooms, Topic
+from .models import Rooms, Topic, Messages
 from .forms import RoomForm
 
 
@@ -73,7 +73,7 @@ def register_page(request):
 
 
 def home(request):
-    q = request.GET.get('q') if request.GET.get('q') is not None else ''
+    q = request.GET.get('q') if request.GET.get('q') != None else ''
 
     # Q allows for query using & and |
     rooms = Rooms.objects.filter(
@@ -82,15 +82,43 @@ def home(request):
         Q(description__icontains=q)
     )
     topics = Topic.objects.all()
+    room_count = rooms.count()
+    room_messages = Messages.objects.filter(Q(room__topic__name__icontains=q))
 
-    context = {'rooms': rooms, 'topics': topics}
+    context = {'rooms': rooms, 'room_count': room_count, 'topics': topics, 'room_messages': room_messages}
     return render(request, 'base/home.html', context)
 
 
 def room(request, pk):
     room = Rooms.objects.get(id=pk)
-    context = {'room': room}
+    room_messages = room.messages_set.all().order_by('-created')
+    participants = room.participants.all()
+
+    context = {'room': room, 'room_messages': room_messages, 'participants': participants}
+
+    if request.method == 'POST':
+        message = Messages.objects.create(
+            user=request.user,
+            room=room,
+            body=request.POST.get('body'),
+        )
+
+        # participiant list should be returned by operson active in room.
+        room.participants.add(request.user)
+        return redirect('room', pk=room.id)
+
     return render(request, 'base/room.html', context)
+
+
+@login_required(login_url='login')
+def profile(request, pk):
+    user = User.objects.get(id=pk)
+    rooms = user.rooms_set.all()
+    room_messages = user.messages_set.all()
+    topics = Topic.objects.all()
+
+    context = {'user': user, "rooms": rooms, "room_messages": room_messages, 'topics': topics}
+    return render(request, 'base/profile.html', context)
 
 
 @login_required(login_url='login')
@@ -132,3 +160,16 @@ def delete_room(request, pk):
         room.delete()
         return redirect('home')
     return render(request, 'base/delete.html', {'obj': room})
+
+
+@login_required(login_url='login')
+def delete_message(request, pk):
+    comment = Messages.objects.get(id=pk)
+
+    if request.user != comment.user:
+        return messages.error(request, 'Only author can edit room')
+
+    if request.method == 'POST':
+        comment.delete()
+        return redirect('home')
+    return render(request, 'base/delete.html', {'obj': comment})
