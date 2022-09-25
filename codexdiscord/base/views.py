@@ -9,7 +9,6 @@ from .models import Rooms, Topic, Messages
 from .forms import UserForm
 
 
-
 def login_page(request):
     page = 'login'
     # if user is login already redirext to home
@@ -80,7 +79,7 @@ def home(request):
         Q(name__icontains=q) |
         Q(description__icontains=q)
     )
-    topics = Topic.objects.all()
+    topics = Topic.objects.all()[0:5]
     room_count = rooms.count()
     room_messages = Messages.objects.filter(Q(room__topic__name__icontains=q))
 
@@ -205,3 +204,14 @@ def update_user(request):
 
     context = {'form': form}
     return render(request, 'base/update_user.html', context)
+
+
+def topics_page(request):
+    q = request.GET.get('q') if request.GET.get('q') != None else ''
+    topics = Topic.objects.filter(name__icontains=q)
+    return render(request, 'base/topics.html', {'topics': topics})
+
+
+def activity_page(request):
+    room_messages = Messages.objects.all()
+    return render(request, 'base/activity.html', {'room_messages': room_messages})
