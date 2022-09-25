@@ -123,14 +123,28 @@ def profile(request, pk):
 
 @login_required(login_url='login')
 def create_room(request):
-    form = RoomForm
-    if request.method == 'POST':
-        form = RoomForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
+    form = RoomForm()
+    topics = Topic.objects.all()
 
-    context = {'form': form}
+    if request.method == 'POST':
+        topic_name = request.POST.get('topic')
+        # or return obcject or create it if not exist
+        topic, created = Topic.objects.get_or_created()
+        form = RoomForm(request.POST)
+        Rooms.objects.create(
+            host=request.user,
+            topic=topic,
+            name=request.POST.get('name')
+        )
+
+        # if form.is_valid():
+        #     room = form.save(commit=False)
+        #     room.host = request.user
+        #     room.participants = request.user
+        #     room.save()
+        #     return redirect('home')
+
+    context = {'form': form, 'topics': topics}
     return render(request, 'base/room_form.html', context)
 
 
