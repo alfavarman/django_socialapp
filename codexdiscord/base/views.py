@@ -6,7 +6,8 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.db.models import Q
 from .models import Rooms, Topic, Messages
-from .forms import RoomForm
+from .forms import UserForm
+
 
 
 def login_page(request):
@@ -67,8 +68,6 @@ def register_page(request):
         #     # if error:
         #     messages.error(request, "Try register again")
 
-
-
     return render(request, 'base/login_register.html', {'form': form})
 
 
@@ -123,14 +122,11 @@ def profile(request, pk):
 
 @login_required(login_url='login')
 def create_room(request):
-                                                #form = RoomForm()
     topics = Topic.objects.all()
 
     if request.method == 'POST':
         topic_name = request.POST.get('topic')
-        # or return obcject or create it if not exist
         topic, created = Topic.objects.get_or_create(name=topic_name)
-                                                # form = RoomForm(request.POST)
 
         Rooms.objects.create(
             host=request.user,
@@ -146,7 +142,7 @@ def create_room(request):
         #     room.save()
         return redirect('home')
 
-    context = {'topics': topics}                #'form': form,
+    context = {'topics': topics}
     return render(request, 'base/room_form.html', context)
 
 
@@ -194,3 +190,18 @@ def delete_message(request, pk):
         comment.delete()
         return redirect('home')
     return render(request, 'base/delete.html', {'obj': comment})
+
+
+@login_required(login_url='login')
+def update_user(request):
+    user = request.user
+    form = UserForm(instance=user)
+
+    if request.method == 'POST':
+        form = UserForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect('profile', pk=user.id)
+
+    context = {'form': form}
+    return render(request, 'base/update_user.html', context)
