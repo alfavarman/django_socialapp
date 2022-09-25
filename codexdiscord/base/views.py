@@ -123,18 +123,20 @@ def profile(request, pk):
 
 @login_required(login_url='login')
 def create_room(request):
-    form = RoomForm()
+                                                #form = RoomForm()
     topics = Topic.objects.all()
 
     if request.method == 'POST':
         topic_name = request.POST.get('topic')
         # or return obcject or create it if not exist
-        topic, created = Topic.objects.get_or_created()
-        form = RoomForm(request.POST)
+        topic, created = Topic.objects.get_or_create(name=topic_name)
+                                                # form = RoomForm(request.POST)
+
         Rooms.objects.create(
             host=request.user,
             topic=topic,
-            name=request.POST.get('name')
+            name=request.POST.get('name'),
+            description=request.POST.get('description'),
         )
 
         # if form.is_valid():
@@ -142,24 +144,29 @@ def create_room(request):
         #     room.host = request.user
         #     room.participants = request.user
         #     room.save()
-        #     return redirect('home')
+        return redirect('home')
 
-    context = {'form': form, 'topics': topics}
+    context = {'topics': topics}                #'form': form,
     return render(request, 'base/room_form.html', context)
 
 
 @login_required(login_url='login')
 def update_room(request, pk):
     room = Rooms.objects.get(id=pk)
-    form = RoomForm(instance=room)
+    topics = Topic.objects.all()
+    if request.user != room.host:
+        return messages.error(request, 'Only Room Host can edit the room')
 
     if request.method == 'POST':
-        form = RoomForm(request.POST, instance=room)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
+        topic_name = request.POST.get('topic')
+        topic, created = Topic.objects.get_or_create(name=topic_name)
+        room.name = request.POST.get('name')
+        room.topic = topic
+        room.description = request.POST.get('description')
+        room.save()
+        return redirect('home')
 
-    context = {'form': form}
+    context = {'topics': topics, 'room': room}
     return render(request, 'base/room_form.html', context)
 
 
