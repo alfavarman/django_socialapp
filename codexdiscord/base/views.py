@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.db.models import Q
 from .models import Rooms, Topic, Messages
-from .forms import RoomForm
+from .forms import UserForm
 
 
 def login_page(request):
@@ -67,8 +67,6 @@ def register_page(request):
         #     # if error:
         #     messages.error(request, "Try register again")
 
-
-
     return render(request, 'base/login_register.html', {'form': form})
 
 
@@ -81,7 +79,7 @@ def home(request):
         Q(name__icontains=q) |
         Q(description__icontains=q)
     )
-    topics = Topic.objects.all()
+    topics = Topic.objects.all()[0:5]
     room_count = rooms.count()
     room_messages = Messages.objects.filter(Q(room__topic__name__icontains=q))
 
@@ -123,29 +121,47 @@ def profile(request, pk):
 
 @login_required(login_url='login')
 def create_room(request):
-    form = RoomForm
-    if request.method == 'POST':
-        form = RoomForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
+    topics = Topic.objects.all()
 
-    context = {'form': form}
+    if request.method == 'POST':
+        topic_name = request.POST.get('topic')
+        topic, created = Topic.objects.get_or_create(name=topic_name)
+
+        Rooms.objects.create(
+            host=request.user,
+            topic=topic,
+            name=request.POST.get('name'),
+            description=request.POST.get('description'),
+        )
+
+        # if form.is_valid():
+        #     room = form.save(commit=False)
+        #     room.host = request.user
+        #     room.participants = request.user
+        #     room.save()
+        return redirect('home')
+
+    context = {'topics': topics}
     return render(request, 'base/room_form.html', context)
 
 
 @login_required(login_url='login')
 def update_room(request, pk):
     room = Rooms.objects.get(id=pk)
-    form = RoomForm(instance=room)
+    topics = Topic.objects.all()
+    if request.user != room.host:
+        return messages.error(request, 'Only Room Host can edit the room')
 
     if request.method == 'POST':
-        form = RoomForm(request.POST, instance=room)
-        if form.is_valid():
-            form.save()
-            return redirect('home')
+        topic_name = request.POST.get('topic')
+        topic, created = Topic.objects.get_or_create(name=topic_name)
+        room.name = request.POST.get('name')
+        room.topic = topic
+        room.description = request.POST.get('description')
+        room.save()
+        return redirect('home')
 
-    context = {'form': form}
+    context = {'topics': topics, 'room': room}
     return render(request, 'base/room_form.html', context)
 
 
@@ -173,3 +189,29 @@ def delete_message(request, pk):
         comment.delete()
         return redirect('home')
     return render(request, 'base/delete.html', {'obj': comment})
+
+
+@login_required(login_url='login')
+def update_user(request):
+    user = request.user
+    form = UserForm(instance=user)
+
+    if request.method == 'POST':
+        form = UserForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect('profile', pk=user.id)
+
+    context = {'form': form}
+    return render(request, 'base/update_user.html', context)
+
+
+def topics_page(request):
+    q = request.GET.get('q') if request.GET.get('q') != None else ''
+    topics = Topic.objects.filter(name__icontains=q)
+    return render(request, 'base/topics.html', {'topics': topics})
+
+
+def activity_page(request):
+    room_messages = Messages.objects.all()
+    return render(request, 'base/activity.html', {'room_messages': room_messages})
