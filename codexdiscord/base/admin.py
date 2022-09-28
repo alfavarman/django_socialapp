@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .models import Rooms ,Topic, Messages
+from .models import User, Rooms, Topic, Messages
 # socialadmin
 # Register your models here.
 
 
-admin.site.register((Rooms, Topic, Messages))
+admin.site.register((User, Rooms, Topic, Messages))

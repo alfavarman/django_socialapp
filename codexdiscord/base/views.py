@@ -1,12 +1,11 @@
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.db.models import Q
-from .models import Rooms, Topic, Messages
-from .forms import UserForm
+from .models import User, Rooms, Topic, Messages
+from .forms import UserForm, UserRegistrationForm
 
 
 def login_page(request):
@@ -47,11 +46,11 @@ def logout_page(request):
 
 
 def register_page(request):
-    form = UserCreationForm()
+    form = UserRegistrationForm()
     # when register send POST
     if request.method == 'POST':
         # form takes data from post
-        form = UserCreationForm(request.POST)
+        form = UserRegistrationForm(request.POST)
         # validation check
         if form.is_valid():
             # save without commit to lowercase input
