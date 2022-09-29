@@ -16,17 +16,17 @@ def login_page(request):
 
     # retrieve login credential
     if request.method == 'POST':
-        username = request.POST.get('username').lower()
+        email = request.POST.get('email').lower()
         password = request.POST.get('password')
 
         # check if user exists
         try:
-            User.objects.get(username=username)
+            User.objects.get(email=email)
         except:
             messages.error(request, 'User not exists')
 
         # make sure credential are correct if not user = None
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, email=email, password=password)
 
         # login user if successfully authenticated
         if user is not None:
