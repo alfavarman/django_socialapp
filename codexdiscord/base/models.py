@@ -7,7 +7,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True, null=True)
     bio = models.TextField(null=True)
 
-    #avatar = models.ImageField()
+    avatar = models.ImageField(null=True, default='avatar.svg')
 
     # set Username to be filled with email on login
     USERNAME_FIELD = 'email'
